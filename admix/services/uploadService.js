@@ -109,41 +109,7 @@ export const uploadService = {
             console.error('Erreur uploadService.deleteCloudinaryImage:', error)
             throw error
         }
-    },
-    uploadAnnonceImages: async (files, oldPublicIds = []) => {
-        console.log("UploadService.uploadAnnonceImages appelé:", {
-            filesCount: files.length,
-            oldPublicIdsCount: oldPublicIds.length,
-        })
-
-        const formData = new FormData()
-
-        // Ajouter tous les fichiers
-        for (let i = 0; i < files.length; i++) {
-            formData.append(`image_${i}`, files[i])
-        }
-
-        // Ajouter les anciens public_ids pour suppression
-        if (oldPublicIds.length > 0) {
-            formData.append("oldPublicIds", JSON.stringify(oldPublicIds))
-        }
-
-        try {
-            console.log("Envoi vers API upload annonce images...")
-            const response = await apiClient.post("/upload/annonce-images", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-                timeout: 60000, // 60 secondes pour plusieurs images
-            })
-
-            console.log("Upload annonce images réponse:", response)
-            return response
-        } catch (error) {
-            console.error("Erreur uploadService.uploadAnnonceImages:", error)
-            throw error
-        }
-    },
+    }
 }
 
 // Fonction de debug pour tester l'upload côté front

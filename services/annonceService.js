@@ -1,9 +1,9 @@
-import apiClient from './api'
+import apiClient from "./api"
 
 export const annonceService = {
     // Récupérer toutes les annonces avec pagination et filtres
     getAll: async (params = {}) => {
-        const response = await apiClient.get('/annonces', { params })
+        const response = await apiClient.get("/annonces", { params })
         return response
     },
 
@@ -15,64 +15,94 @@ export const annonceService = {
 
     // Créer une nouvelle annonce
     create: async (annonceData) => {
-        const formData = new FormData()
+        // Check if photos are Cloudinary URLs (strings) or File objects
+        const hasCloudinaryPhotos =
+            annonceData.photos && annonceData.photos.length > 0 && typeof annonceData.photos[0] === "string"
 
-        // Ajouter les photos
-        if (annonceData.photos && annonceData.photos.length > 0) {
-            annonceData.photos.forEach((photo, index) => {
-                if (photo instanceof File) {
-                    formData.append(`photos`, photo)
+        if (hasCloudinaryPhotos) {
+            // Send as JSON for Cloudinary URLs
+            const response = await apiClient.post("/annonces", annonceData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            return response
+        } else {
+            // Use FormData for file uploads (existing logic)
+            const formData = new FormData()
+
+            // Ajouter les photos
+            if (annonceData.photos && annonceData.photos.length > 0) {
+                annonceData.photos.forEach((photo, index) => {
+                    if (photo instanceof File) {
+                        formData.append(`photos`, photo)
+                    }
+                })
+            }
+
+            // Ajouter les autres champs
+            Object.keys(annonceData).forEach((key) => {
+                if (key === "photos") return // Déjà traité
+
+                if (key === "caracteristiques") {
+                    formData.append(key, JSON.stringify(annonceData[key]))
+                } else {
+                    formData.append(key, annonceData[key])
                 }
             })
+
+            const response = await apiClient.post("/annonces", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            })
+            return response
         }
-
-        // Ajouter les autres champs
-        Object.keys(annonceData).forEach(key => {
-            if (key === 'photos') return // Déjà traité
-
-            if (key === 'caracteristiques') {
-                formData.append(key, JSON.stringify(annonceData[key]))
-            } else {
-                formData.append(key, annonceData[key])
-            }
-        })
-
-        const response = await apiClient.post('/annonces', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        return response
     },
 
     // Mettre à jour une annonce
     update: async (id, annonceData) => {
-        const formData = new FormData()
+        // Check if photos are Cloudinary URLs (strings) or File objects
+        const hasCloudinaryPhotos =
+            annonceData.photos && annonceData.photos.length > 0 && typeof annonceData.photos[0] === "string"
 
-        if (annonceData.photos && annonceData.photos.length > 0) {
-            annonceData.photos.forEach((photo) => {
-                if (photo instanceof File) {
-                    formData.append(`photos`, photo)
+        if (hasCloudinaryPhotos) {
+            // Send as JSON for Cloudinary URLs
+            const response = await apiClient.put(`/annonces/${id}`, annonceData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            return response
+        } else {
+            // Use FormData for file uploads (existing logic)
+            const formData = new FormData()
+
+            if (annonceData.photos && annonceData.photos.length > 0) {
+                annonceData.photos.forEach((photo) => {
+                    if (photo instanceof File) {
+                        formData.append(`photos`, photo)
+                    }
+                })
+            }
+
+            Object.keys(annonceData).forEach((key) => {
+                if (key === "photos") return
+
+                if (key === "caracteristiques") {
+                    formData.append(key, JSON.stringify(annonceData[key]))
+                } else {
+                    formData.append(key, annonceData[key])
                 }
             })
+
+            const response = await apiClient.put(`/annonces/${id}`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            })
+            return response
         }
-
-        Object.keys(annonceData).forEach(key => {
-            if (key === 'photos') return
-
-            if (key === 'caracteristiques') {
-                formData.append(key, JSON.stringify(annonceData[key]))
-            } else {
-                formData.append(key, annonceData[key])
-            }
-        })
-
-        const response = await apiClient.put(`/annonces/${id}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        return response
     },
 
     // Supprimer une annonce
@@ -95,7 +125,7 @@ export const annonceService = {
 
     // Recherche avancée
     search: async (filters) => {
-        const response = await apiClient.post('/annonces/search', filters)
+        const response = await apiClient.post("/annonces/search", filters)
         return response
     },
 
@@ -115,5 +145,5 @@ export const annonceService = {
     duplicate: async (id) => {
         const response = await apiClient.post(`/annonces/${id}/duplicate`)
         return response
-    }
+    },
 }
