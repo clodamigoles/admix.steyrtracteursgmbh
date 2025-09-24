@@ -1,0 +1,8 @@
+export { categoryService } from './categoryService'
+export { vendeurService } from './vendeurService'
+export { annonceService } from './annonceService'
+export { devisService } from './devisService'
+export { rechercheService } from './rechercheService'
+export { dashboardService } from './dashboardService'
+export { authService } from './authService'
+export { uploadService } from './uploadService'
