@@ -74,8 +74,8 @@ const AdminLayout = ({ children }) => {
         { name: 'Vendeurs', href: '/admin/vendeurs', icon: Users },
         { name: 'Catégories', href: '/admin/categories', icon: FileText },
         { name: 'Devis', href: '/admin/devis', icon: FileText },
-        { name: 'Statistiques', href: '/admin/statistiques', icon: BarChart3 },
-        { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
+        { name: 'Commandes', href: '/admin/orders', icon: BarChart3 },
+        // { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
     ]
 
     if (loading) {

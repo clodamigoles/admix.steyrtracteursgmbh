@@ -24,7 +24,7 @@ async function getCategories(req, res) {
             niveau,
             parentId,
             page = 1,
-            limit = 50,
+            limit = 250,
             search,
             sortBy = 'nom',
             sortOrder = 'asc'

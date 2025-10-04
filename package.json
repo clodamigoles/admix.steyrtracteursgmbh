@@ -1,6 +1,6 @@
 {
   "name": "admix.steyrtracteursgmbh",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,14 +10,18 @@
   "dependencies": {
     "axios": "^1.12.2",
     "cloudinary": "^2.7.0",
+    "clsx": "^2.1.1",
     "formidable": "^3.5.4",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
     "mongoose": "^8.18.2",
     "next": "15.5.4",
+    "nodemailer": "^7.0.6",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "tailwind-merge": "^3.3.1",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

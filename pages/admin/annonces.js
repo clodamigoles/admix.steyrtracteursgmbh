@@ -592,24 +592,24 @@ const AnnonceModal = ({ annonce, categories, vendeurs, onClose, onSuccess }) => 
 
         // Validation des fichiers
         const validFiles = files.filter((file) => {
-            const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
-            const maxSize = 10 * 1024 * 1024 // 10MB
+            const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/avif"]
+            const maxSize = 30 * 1024 * 1024
 
             if (!allowedTypes.includes(file.type)) {
-                setError(`Format non supporté pour ${file.name}. Utilisez PNG, JPG, GIF ou WebP.`)
+                setError(`Format non supporté pour ${file.name}. Utilisez PNG, JPG, GIF, AVIF ou WebP.`)
                 return false
             }
 
             if (file.size > maxSize) {
-                setError(`${file.name} est trop volumineux (max 10MB)`)
+                setError(`${file.name} est trop volumineux (max 30MB)`)
                 return false
             }
 
             return true
         })
 
-        if (validFiles.length + formData.photos.length > 10) {
-            setError("Maximum 10 photos autorisées")
+        if (validFiles.length + formData.photos.length > 30) {
+            setError("Maximum 30 photos autorisées")
             return
         }
 
@@ -1077,7 +1077,7 @@ const AnnonceModal = ({ annonce, categories, vendeurs, onClose, onSuccess }) => 
                                             />
                                         </label>
                                         <p className="mt-1 text-xs text-gray-500">
-                                            PNG, JPG, GIF, WebP jusqu'à 10MB chacune. Maximum 10 photos.
+                                            PNG, JPG, GIF, WebP, AVIF jusqu'à 30MB chacune. Maximum 30 photos.
                                         </p>
                                     </div>
                                 </div>
@@ -1123,7 +1123,7 @@ const AnnonceModal = ({ annonce, categories, vendeurs, onClose, onSuccess }) => 
                             {formData.photos.length > 0 && (
                                 <div>
                                     <p className="text-sm font-medium text-gray-700 mb-3">
-                                        Photos actuelles ({formData.photos.length}/10)
+                                        Photos actuelles ({formData.photos.length}/30)
                                     </p>
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                         {formData.photos.map((photo, index) => (

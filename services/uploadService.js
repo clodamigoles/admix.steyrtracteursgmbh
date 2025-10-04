@@ -134,7 +134,7 @@ export const uploadService = {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
-                timeout: 60000, // 60 secondes pour plusieurs images
+                timeout: 60000 * 5,
             })
 
             console.log("Upload annonce images réponse:", response)
@@ -186,14 +186,14 @@ const CategoryModal = ({ category, parentCategories, onClose, onSuccess }) => {
         })
 
         // Vérifications côté client
-        const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp']
+        const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/avif']
         if (!allowedTypes.includes(file.type)) {
-            setError('Format de fichier non supporté. Utilisez SVG, PNG, JPG, GIF ou WebP.')
+            setError('Format de fichier non supporté. Utilisez SVG, PNG, JPG, AVIF, GIF ou WebP.')
             return
         }
 
-        if (file.size > 5 * 1024 * 1024) { // 5MB max
-            setError('Le fichier est trop volumineux (max 5MB)')
+        if (file.size > 30 * 1024 * 1024) { // 5MB max
+            setError('Le fichier est trop volumineux (max 30MB)')
             return
         }
 

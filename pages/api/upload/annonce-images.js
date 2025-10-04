@@ -33,8 +33,8 @@ export default async function handler(req, res) {
         }
 
         const form = new IncomingForm({
-            maxFileSize: 10 * 1024 * 1024, // 10MB max par image
-            maxFiles: 10, // Maximum 10 images
+            maxFileSize: 30 * 1024 * 1024, // 10MB max par image
+            maxFiles: 30, // Maximum 10 images
             keepExtensions: true,
             uploadDir: "/tmp",
         })
@@ -75,25 +75,25 @@ export default async function handler(req, res) {
                 console.log(`Upload de l'image: ${file.originalFilename}`)
 
                 // Vérifications du fichier
-                const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
+                const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/avif"]
                 if (!allowedTypes.includes(file.mimetype)) {
                     console.error(`Type de fichier non supporté: ${file.mimetype}`)
                     continue
                 }
 
                 try {
-                    // Upload vers Cloudinary avec transformation automatique
+                    // Upload vers Cloudinary SANS compression (qualité maximale préservée)
                     const result = await cloudinary.uploader.upload(file.filepath, {
                         folder: "admix/annonces",
                         resource_type: "image",
-                        transformation: [
-                            { width: 1200, height: 800, crop: "limit", quality: "auto:good" },
-                            { fetch_format: "auto" },
-                        ],
+                        // NOUVELLE CONFIGURATION : Qualité maximale préservée
+                        quality: "100",  // Qualité maximale (pas de compression)
+                        // Pas de redimensionnement automatique
+                        // Pas de transformation appliquée
                         tags: ["annonce", "admix"],
                     })
 
-                    console.log(`Image uploadée avec succès: ${result.public_id}`)
+                    console.log(`Image uploadée avec succès (qualité originale): ${result.public_id}`)
 
                     uploadedImages.push({
                         public_id: result.public_id,
@@ -118,12 +118,12 @@ export default async function handler(req, res) {
             }
         }
 
-        console.log(`Upload terminé: ${uploadedImages.length} images uploadées`)
+        console.log(`Upload terminé: ${uploadedImages.length} images uploadées (qualité originale)`)
 
         return res.status(200).json({
             success: true,
             data: uploadedImages,
-            message: `${uploadedImages.length} image(s) uploadée(s) avec succès`,
+            message: `${uploadedImages.length} image(s) uploadée(s) avec succès (qualité originale préservée)`,
         })
     } catch (error) {
         console.error("=== ERREUR UPLOAD ANNONCE IMAGES API ===")
