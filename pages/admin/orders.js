@@ -37,8 +37,8 @@ export default function AdminOrders() {
         setSelectedOrder(orderItem)
         setBonCommandeForm({
             bonCommande: orderItem.infoBancaires?.bonCommande || "",
-            iban: orderItem.infoBancaires?.iban || "AT12 3456 7890 1234 5678",
-            bic: orderItem.infoBancaires?.bic || "BKAUATWW",
+            iban: "",
+            bic: "",
             montantAPayer: orderItem.infoBancaires?.montant || orderItem.annoncePrice || "",
             devise: orderItem.infoBancaires?.devise || orderItem.annonceDevise || "EUR",
         })

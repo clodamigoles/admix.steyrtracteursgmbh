@@ -346,7 +346,7 @@ async function envoyerEmailClient(order) {
                         <p><strong>Montant à payer :</strong> ${order.infoBancaires.montant} ${order.infoBancaires.devise}</p>
                         <p><strong>IBAN :</strong> ${order.infoBancaires.iban}</p>
                         <p><strong>BIC :</strong> ${order.infoBancaires.bic}</p>
-                        <p><strong>Référence :</strong> ${order._id.slice(-8)}</p>
+                        <p><strong>Référence :</strong> ${order._id.toString().slice(-8)}</p>
                     </div>
 
                     <p>Pour finaliser votre commande, veuillez :</p>
