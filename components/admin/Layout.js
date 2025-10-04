@@ -75,6 +75,7 @@ const AdminLayout = ({ children }) => {
         { name: 'Catégories', href: '/admin/categories', icon: FileText },
         { name: 'Devis', href: '/admin/devis', icon: FileText },
         { name: 'Commandes', href: '/admin/orders', icon: BarChart3 },
+        
         // { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
     ]
 

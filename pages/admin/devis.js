@@ -463,10 +463,10 @@ export default function AdminDevis() {
                                     {/* Réponse admin (contrat envoyé) */}
                                     {selectedDevis.reponseAdmin && selectedDevis.reponseAdmin.contrat && (
                                         <div className="bg-blue-50 p-4 rounded-lg">
-                                            <h4 className="font-medium text-gray-900 mb-3">Contrat envoyé au client</h4>
+                                            <h4 className="font-medium text-gray-900 mb-3">Devis envoyé au client</h4>
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-600">Contrat PDF</span>
+                                                    <span className="text-sm text-gray-600">Devis PDF</span>
                                                     <a
                                                         href={selectedDevis.reponseAdmin.contrat.secure_url}
                                                         target="_blank"
@@ -513,7 +513,7 @@ export default function AdminDevis() {
                                                 {selectedDevis.reponseClient.documentsUploades.contratSigne && (
                                                     <div>
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-600">Contrat signé</span>
+                                                            <span className="text-sm text-gray-600">Devis signé</span>
                                                             <a
                                                                 href={selectedDevis.reponseClient.documentsUploades.contratSigne.secure_url}
                                                                 target="_blank"
@@ -730,7 +730,7 @@ export default function AdminDevis() {
                                 <form onSubmit={handleSubmitReponse} className="space-y-4">
                                     {/* Upload contrat */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Contrat (PDF) *</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Devis (PDF) *</label>
                                         <div className="flex items-center space-x-4">
                                             <input
                                                 type="file"
@@ -742,7 +742,7 @@ export default function AdminDevis() {
                                         </div>
                                         {reponseForm.contrat && (
                                             <div className="mt-2 flex items-center space-x-4">
-                                                <span className="text-sm text-green-600">✓ Contrat uploadé</span>
+                                                <span className="text-sm text-green-600">✓ Devis uploadé</span>
                                                 <a
                                                     href={reponseForm.contrat}
                                                     target="_blank"

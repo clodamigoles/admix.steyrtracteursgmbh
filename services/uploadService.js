@@ -28,7 +28,7 @@ export const uploadService = {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-                timeout: 30000, // 30 secondes timeout
+                timeout: 300000, // 30 secondes timeout
             })
 
             console.log('Réponse API reçue:', response)
@@ -76,7 +76,7 @@ export const uploadService = {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-                timeout: 30000,
+                timeout: 300000,
             })
 
             console.log('Upload vendeur réponse:', response)
@@ -134,7 +134,7 @@ export const uploadService = {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
-                timeout: 60000 * 5,
+                timeout: 600000 * 5,
             })
 
             console.log("Upload annonce images réponse:", response)

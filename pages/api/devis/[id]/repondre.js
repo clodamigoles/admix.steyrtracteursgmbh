@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         if (!contrat || !iban || !bic || !montantAPayer) {
             return res.status(400).json({
                 success: false,
-                error: "Tous les champs sont requis (contrat, IBAN, BIC, montant)",
+                error: "Tous les champs sont requis (devis, IBAN, BIC, montant)",
             })
         }
 
@@ -353,13 +353,13 @@ async function envoyerEmailClient(devis) {
 
                     <p>Pour finaliser votre commande, veuillez :</p>
                     <ol>
-                        <li>Télécharger et signer le contrat</li>
+                        <li>Télécharger le devis</li>
                         <li>Effectuer le paiement sur le compte indiqué</li>
                         <li>Valider votre commande</li>
                     </ol>
 
                     <div class="button-container">
-                        <a href="${contratDownloadUrl}" class="button button-secondary">Télécharger le contrat</a>
+                        <a href="${contratDownloadUrl}" class="button button-secondary" style="color: ">Télécharger le dévis</a>
                         <a href="${urlValidation}" class="button button-primary">Valider ma commande</a>
                     </div>
 
@@ -368,9 +368,8 @@ async function envoyerEmailClient(devis) {
 
                 <div class="footer">
                     <div class="signature">
-                        <p>Cordialement,<br>L'équipe Admix</p>
+                        <p>Cordialement,<br>L'équipe Steyr Tracteurs GMBH</p>
                     </div>
-                    <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.</p>
                 </div>
             </div>
         </body>

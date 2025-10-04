@@ -46,8 +46,8 @@ export default async function handler(req, res) {
         // Upload vers Cloudinary
         const result = await cloudinary.uploader.upload(file.filepath, {
             resource_type: "raw",
-            folder: "ccontrats",
-            public_id: `contrat_${Date.now()}`,
+            folder: "ddevis",
+            public_id: `devis${Date.now()}`,
         })
 
         // Nettoyage du fichier temporaire
