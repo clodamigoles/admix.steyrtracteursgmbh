@@ -26,13 +26,11 @@ export default function AdminDashboard() {
 
                 console.log('Chargement des données dashboard...')
 
-                // Essayer de charger les stats avec un timeout
                 const statsPromise = dashboardService.getStats().catch(err => {
                     console.error('Erreur stats:', err)
                     return { data: getDefaultStats() }
                 })
 
-                // Essayer de charger les activités avec un timeout  
                 const activitiesPromise = dashboardService.getRecentActivities(10).catch(err => {
                     console.error('Erreur activités:', err)
                     return { data: [] }

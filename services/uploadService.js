@@ -27,8 +27,7 @@ export const uploadService = {
             const response = await apiClient.post('/upload/category-icon', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                },
-                timeout: 300000, // 30 secondes timeout
+                }
             })
 
             console.log('Réponse API reçue:', response)
@@ -75,8 +74,7 @@ export const uploadService = {
             const response = await apiClient.post('/upload/vendeur-image', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                },
-                timeout: 300000,
+                }
             })
 
             console.log('Upload vendeur réponse:', response)
@@ -133,8 +131,7 @@ export const uploadService = {
             const response = await apiClient.post("/upload/annonce-images", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
-                },
-                timeout: 600000 * 5,
+                }
             })
 
             console.log("Upload annonce images réponse:", response)

@@ -67,8 +67,8 @@ export const devisService = {
     // Upload contrat
     uploadContrat: async (file) => {
         const formData = new FormData()
-        formData.append("contrat", file)
-
+        formData.append("devis", file)  // Changer 'contrat' en 'devis'
+    
         const response = await apiClient.post("/upload/devis-contrat", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
