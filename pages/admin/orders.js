@@ -20,6 +20,84 @@ export default function AdminOrders() {
     })
     const [updatingStatus, setUpdatingStatus] = useState(false)
 
+    // Ajoutez ces états après les états existants
+    const [showBonCommandeModal, setShowBonCommandeModal] = useState(false)
+    const [bonCommandeForm, setBonCommandeForm] = useState({
+        bonCommande: "",
+        iban: "",
+        bic: "",
+        montantAPayer: "",
+        devise: "EUR",
+    })
+    const [uploadingBonCommande, setUploadingBonCommande] = useState(false)
+    const [sendingBonCommande, setSendingBonCommande] = useState(false)
+
+    // Ajoutez ces fonctions
+    const openBonCommandeModal = (orderItem) => {
+        setSelectedOrder(orderItem)
+        setBonCommandeForm({
+            bonCommande: orderItem.infoBancaires?.bonCommande || "",
+            iban: orderItem.infoBancaires?.iban || "AT12 3456 7890 1234 5678",
+            bic: orderItem.infoBancaires?.bic || "BKAUATWW",
+            montantAPayer: orderItem.infoBancaires?.montant || orderItem.annoncePrice || "",
+            devise: orderItem.infoBancaires?.devise || orderItem.annonceDevise || "EUR",
+        })
+        setShowBonCommandeModal(true)
+    }
+
+    const closeBonCommandeModal = () => {
+        setShowBonCommandeModal(false)
+        setSelectedOrder(null)
+        setBonCommandeForm({
+            bonCommande: "",
+            iban: "",
+            bic: "",
+            montantAPayer: "",
+            devise: "EUR",
+        })
+    }
+
+    const handleBonCommandeUpload = async (event) => {
+        const file = event.target.files[0]
+        if (!file) return
+
+        try {
+            setUploadingBonCommande(true)
+            const response = await ordersService.uploadBonCommande(file)
+            setBonCommandeForm((prev) => ({
+                ...prev,
+                bonCommande: response.data.url,
+            }))
+        } catch (error) {
+            console.error("Erreur lors de l'upload du bon de commande:", error)
+            alert("Erreur lors de l'upload du bon de commande")
+        } finally {
+            setUploadingBonCommande(false)
+        }
+    }
+
+    const handleSubmitBonCommande = async (e) => {
+        e.preventDefault()
+
+        if (!bonCommandeForm.bonCommande || !bonCommandeForm.iban || !bonCommandeForm.bic || !bonCommandeForm.montantAPayer) {
+            alert("Tous les champs sont requis")
+            return
+        }
+
+        try {
+            setSendingBonCommande(true)
+            await ordersService.envoyerBonCommande(selectedOrder._id, bonCommandeForm)
+            alert("Bon de commande envoyé avec succès au client")
+            closeBonCommandeModal()
+            loadOrders() // Recharger la liste
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du bon de commande:", error)
+            alert("Erreur lors de l'envoi du bon de commande")
+        } finally {
+            setSendingBonCommande(false)
+        }
+    }
+
     // Filtres et pagination
     const [filters, setFilters] = useState({
         search: "",
@@ -282,7 +360,16 @@ export default function AdminOrders() {
                                             {formatDate(orderItem.dateCommande || orderItem.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                            <button onClick={() => openStatusModal(orderItem)} className="text-blue-600 hover:text-blue-900">
+                                            <button
+                                                onClick={() => openBonCommandeModal(orderItem)}
+                                                className="text-purple-600 hover:text-purple-900"
+                                            >
+                                                {orderItem.infoBancaires?.bonCommande ? "Modifier bon de commande" : "Envoyer bon de commande"}
+                                            </button>
+                                            <button
+                                                onClick={() => openStatusModal(orderItem)}
+                                                className="text-blue-600 hover:text-blue-900"
+                                            >
                                                 Modifier statut
                                             </button>
                                             <button
@@ -334,8 +421,8 @@ export default function AdminOrders() {
                                                 key={page}
                                                 onClick={() => handlePageChange(page)}
                                                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === pagination.page
-                                                        ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                                        : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                                                     }`}
                                             >
                                                 {page}
@@ -506,6 +593,38 @@ export default function AdminOrders() {
                                             <p className="text-sm text-gray-700">{selectedOrder.message}</p>
                                         </div>
                                     )}
+                                    {/* Bon de commande envoyé */}
+                                    {selectedOrder.infoBancaires?.bonCommande && (
+                                        <div className="bg-purple-50 p-4 rounded-lg">
+                                            <h4 className="font-medium text-gray-900 mb-3">Bon de commande envoyé</h4>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm text-gray-600">Bon de commande PDF</span>
+
+                                                    <a href={selectedOrder.infoBancaires.bonCommandeDownloadUrl || selectedOrder.infoBancaires.bonCommande}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200"
+                                                    >
+                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                            />
+                                                        </svg>
+                                                        Télécharger
+                                                    </a>
+                                                </div>
+                                                {selectedOrder.infoBancaires.dateEnvoi && (
+                                                    <div className="text-xs text-gray-500">
+                                                        Envoyé le {formatDate(selectedOrder.infoBancaires.dateEnvoi)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex justify-end mt-6">
@@ -581,6 +700,165 @@ export default function AdminOrders() {
                                             className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                                         >
                                             {updatingStatus ? "Mise à jour..." : "Mettre à jour"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* Modal d'envoi du bon de commande */}
+                {showBonCommandeModal && (
+                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                        <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                            <div className="mt-3">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-medium text-gray-900">
+                                        Envoyer le bon de commande - {selectedOrder?.prenom} {selectedOrder?.nom}
+                                    </h3>
+                                    <button onClick={closeBonCommandeModal} className="text-gray-400 hover:text-gray-600">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Informations de la commande */}
+                                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                    <h4 className="font-medium text-gray-900 mb-2">Détails de la commande</h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-gray-600">Annonce :</span>
+                                            <div className="font-medium">{selectedOrder?.annonceId?.titre || selectedOrder?.annonceTitre}</div>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Client :</span>
+                                            <div className="font-medium">
+                                                {selectedOrder?.prenom} {selectedOrder?.nom}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Email :</span>
+                                            <div className="font-medium">{selectedOrder?.email}</div>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Téléphone :</span>
+                                            <div className="font-medium">{selectedOrder?.telephone}</div>
+                                        </div>
+                                    </div>
+                                    {selectedOrder?.message && (
+                                        <div className="mt-3">
+                                            <span className="text-gray-600">Message :</span>
+                                            <div className="font-medium">{selectedOrder.message}</div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <form onSubmit={handleSubmitBonCommande} className="space-y-4">
+                                    {/* Upload bon de commande */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Bon de commande (PDF) *</label>
+                                        <div className="flex items-center space-x-4">
+                                            <input
+                                                type="file"
+                                                accept=".pdf"
+                                                onChange={handleBonCommandeUpload}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                            />
+                                            {uploadingBonCommande && <div className="text-sm text-purple-600">Upload en cours...</div>}
+                                        </div>
+                                        {bonCommandeForm.bonCommande && (
+                                            <div className="mt-2 flex items-center space-x-4">
+                                                <span className="text-sm text-green-600">✓ Bon de commande uploadé</span>
+
+                                                <a href={bonCommandeForm.bonCommande}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200"
+                                                >
+                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                        />
+                                                    </svg>
+                                                    Télécharger
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* IBAN */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">IBAN *</label>
+                                        <input
+                                            type="text"
+                                            value={bonCommandeForm.iban}
+                                            onChange={(e) => setBonCommandeForm((prev) => ({ ...prev, iban: e.target.value }))}
+                                            placeholder="AT12 3456 7890 1234 5678"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* BIC */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">BIC *</label>
+                                        <input
+                                            type="text"
+                                            value={bonCommandeForm.bic}
+                                            onChange={(e) => setBonCommandeForm((prev) => ({ ...prev, bic: e.target.value }))}
+                                            placeholder="BKAUATWW"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Montant */}
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Montant à payer *</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={bonCommandeForm.montantAPayer}
+                                                onChange={(e) => setBonCommandeForm((prev) => ({ ...prev, montantAPayer: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Devise</label>
+                                            <select
+                                                value={bonCommandeForm.devise}
+                                                onChange={(e) => setBonCommandeForm((prev) => ({ ...prev, devise: e.target.value }))}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            >
+                                                <option value="EUR">EUR</option>
+                                                <option value="USD">USD</option>
+                                                <option value="GBP">GBP</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Boutons */}
+                                    <div className="flex justify-end space-x-3 pt-4">
+                                        <button
+                                            type="button"
+                                            onClick={closeBonCommandeModal}
+                                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                        >
+                                            Annuler
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={sendingBonCommande}
+                                            className="px-4 py-2 bg-purple-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                                        >
+                                            {sendingBonCommande ? "Envoi en cours..." : "Envoyer le bon de commande"}
                                         </button>
                                     </div>
                                 </form>

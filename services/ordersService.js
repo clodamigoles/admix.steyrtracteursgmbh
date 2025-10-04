@@ -76,4 +76,21 @@ export const ordersService = {
         })
         return response
     },
+    envoyerBonCommande: async (id, commandeData) => {
+        const response = await apiClient.post(`/orders/${id}/envoyer-bon-commande`, commandeData)
+        return response
+    },
+    
+    // Upload bon de commande
+    uploadBonCommande: async (file) => {
+        const formData = new FormData()
+        formData.append("bon_commande", file)
+    
+        const response = await apiClient.post("/upload/order-bon-commande", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        })
+        return response
+    },
 }

@@ -92,12 +92,12 @@ const orderSchema = new mongoose.Schema(
         infoBancaires: {
             iban: {
                 type: String,
-                default: "AT12 3456 7890 1234 5678",
+                default: "",
                 trim: true,
             },
             bic: {
                 type: String,
-                default: "BKAUATWW",
+                default: "",
                 trim: true,
             },
             montant: {
@@ -107,6 +107,23 @@ const orderSchema = new mongoose.Schema(
             devise: {
                 type: String,
                 default: "EUR",
+            },
+            // NOUVEAUX CHAMPS
+            bonCommande: {
+                type: String, // URL du bon de commande
+            },
+            bonCommandeDownloadUrl: {
+                type: String,
+            },
+            dateEnvoi: {
+                type: Date,
+            },
+            emailEnvoye: {
+                type: Boolean,
+                default: false,
+            },
+            dateEmailEnvoye: {
+                type: Date,
             },
         },
 
