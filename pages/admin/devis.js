@@ -20,6 +20,7 @@ export default function AdminDevis() {
         bic: "",
         montantAPayer: "",
         devise: "EUR",
+        langue: "", // OBLIGATOIRE - pas de défaut
     })
     const [uploadingContrat, setUploadingContrat] = useState(false)
     const [sendingReponse, setSendingReponse] = useState(false)
@@ -78,6 +79,7 @@ export default function AdminDevis() {
             bic: devisItem.reponseAdmin?.bic || "",
             montantAPayer: devisItem.reponseAdmin?.montantAPayer || "",
             devise: devisItem.reponseAdmin?.devise || "EUR",
+            langue: devisItem.reponseAdmin?.langue || "",
         })
         setShowReponseModal(true)
     }
@@ -96,6 +98,7 @@ export default function AdminDevis() {
             bic: "",
             montantAPayer: "",
             devise: "EUR",
+            langue: "",
         })
     }
 
@@ -126,13 +129,22 @@ export default function AdminDevis() {
     const handleSubmitReponse = async (e) => {
         e.preventDefault()
 
+        console.log("🚀 [FRONTEND DEVIS] Données du formulaire:", reponseForm)
+        console.log("🚀 [FRONTEND DEVIS] Langue sélectionnée:", reponseForm.langue)
+
         if (!reponseForm.contrat || !reponseForm.iban || !reponseForm.bic || !reponseForm.montantAPayer) {
             alert("Tous les champs sont requis")
             return
         }
 
+        if (!reponseForm.langue) {
+            alert("Veuillez sélectionner une langue pour l'email")
+            return
+        }
+
         try {
             setSendingReponse(true)
+            console.log("🚀 [FRONTEND DEVIS] Envoi vers l'API...")
             await devisService.repondre(selectedDevis._id, reponseForm)
             alert("Réponse envoyée avec succès au client")
             closeReponseModal()
@@ -815,6 +827,29 @@ export default function AdminDevis() {
                                                 <option value="GBP">GBP</option>
                                             </select>
                                         </div>
+                                    </div>
+
+                                    {/* Langue de l'email */}
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                                            Langue de l'email *
+                                        </label>
+                                        <select
+                                            value={reponseForm.langue}
+                                            onChange={(e) => {
+                                                console.log("🔄 [FRONTEND DEVIS] Langue changée vers:", e.target.value)
+                                                setReponseForm((prev) => ({ ...prev, langue: e.target.value }))
+                                            }}
+                                            className="w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            required
+                                        >
+                                            <option value="">-- Sélectionnez une langue --</option>
+                                            <option value="fr">🇫🇷 Français</option>
+                                            <option value="de">🇩🇪 Deutsch (Allemand)</option>
+                                        </select>
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            ⚠️ Le client recevra l'email dans la langue sélectionnée
+                                        </p>
                                     </div>
 
                                     {/* Boutons */}

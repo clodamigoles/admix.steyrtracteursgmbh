@@ -28,6 +28,7 @@ export default function AdminOrders() {
         bic: "",
         montantAPayer: "",
         devise: "EUR",
+        langue: "", // OBLIGATOIRE - pas de défaut
     })
     const [uploadingBonCommande, setUploadingBonCommande] = useState(false)
     const [sendingBonCommande, setSendingBonCommande] = useState(false)
@@ -41,6 +42,7 @@ export default function AdminOrders() {
             bic: "",
             montantAPayer: orderItem.infoBancaires?.montant || orderItem.annoncePrice || "",
             devise: orderItem.infoBancaires?.devise || orderItem.annonceDevise || "EUR",
+            langue: orderItem.infoBancaires?.langue || "", // Pas de défaut
         })
         setShowBonCommandeModal(true)
     }
@@ -54,6 +56,7 @@ export default function AdminOrders() {
             bic: "",
             montantAPayer: "",
             devise: "EUR",
+            langue: "",
         })
     }
 
@@ -79,19 +82,28 @@ export default function AdminOrders() {
     const handleSubmitBonCommande = async (e) => {
         e.preventDefault()
 
+        console.log("🚀 [FRONTEND] Données du formulaire:", bonCommandeForm)
+        console.log("🚀 [FRONTEND] Langue sélectionnée:", bonCommandeForm.langue)
+
         if (!bonCommandeForm.bonCommande || !bonCommandeForm.iban || !bonCommandeForm.bic || !bonCommandeForm.montantAPayer) {
             alert("Tous les champs sont requis")
             return
         }
 
+        if (!bonCommandeForm.langue) {
+            alert("Veuillez sélectionner une langue pour l'email")
+            return
+        }
+
         try {
             setSendingBonCommande(true)
+            console.log("🚀 [FRONTEND] Envoi vers l'API...")
             await ordersService.envoyerBonCommande(selectedOrder._id, bonCommandeForm)
             alert("Bon de commande envoyé avec succès au client")
             closeBonCommandeModal()
             loadOrders() // Recharger la liste
         } catch (error) {
-            console.error("Erreur lors de l'envoi du bon de commande:", error)
+            console.error("❌ [FRONTEND] Erreur:", error)
             alert("Erreur lors de l'envoi du bon de commande")
         } finally {
             setSendingBonCommande(false)
@@ -842,6 +854,29 @@ export default function AdminOrders() {
                                                 <option value="GBP">GBP</option>
                                             </select>
                                         </div>
+                                    </div>
+
+                                    {/* Langue de l'email - OBLIGATOIRE */}
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                        <label className="block text-sm font-medium text-gray-900 mb-2">
+                                            Langue de l'email *
+                                        </label>
+                                        <select
+                                            value={bonCommandeForm.langue}
+                                            onChange={(e) => {
+                                                console.log("🔄 [FRONTEND] Langue changée vers:", e.target.value)
+                                                setBonCommandeForm((prev) => ({ ...prev, langue: e.target.value }))
+                                            }}
+                                            className="w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            required
+                                        >
+                                            <option value="">-- Sélectionnez une langue --</option>
+                                            <option value="fr">🇫🇷 Français</option>
+                                            <option value="de">🇩🇪 Deutsch (Allemand)</option>
+                                        </select>
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            ⚠️ Le client recevra l'email dans la langue sélectionnée
+                                        </p>
                                     </div>
 
                                     {/* Boutons */}

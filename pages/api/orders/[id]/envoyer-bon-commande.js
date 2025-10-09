@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongodb"
 import { Order } from "@/models"
 import nodemailer from "nodemailer"
+const { getTranslation, getEmailSubject } = require("@/lib/email-translations")
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -13,7 +14,12 @@ export default async function handler(req, res) {
     await connectDB()
 
     const { id } = req.query
-    const { bonCommande, iban, bic, montantAPayer, devise = "EUR" } = req.body
+    const { bonCommande, iban, bic, montantAPayer, devise = "EUR", langue } = req.body
+
+    console.log("📧 [API] ========== DÉBUT ENVOYER BON COMMANDE ==========")
+    console.log("📧 [API] Body complet:", req.body)
+    console.log("📧 [API] Langue reçue:", langue)
+    console.log("📧 [API] Type de langue:", typeof langue)
 
     try {
         // Validation des champs requis
@@ -23,6 +29,17 @@ export default async function handler(req, res) {
                 error: "Tous les champs sont requis (bon de commande, IBAN, BIC, montant)",
             })
         }
+
+        // Validation de la langue
+        if (!langue) {
+            console.log("❌ [API] Langue manquante!")
+            return res.status(400).json({
+                success: false,
+                error: "La langue est requise",
+            })
+        }
+
+        console.log("✅ [API] Validation OK - langue:", langue)
 
         // Validation du montant
         if (montantAPayer <= 0) {
@@ -50,6 +67,7 @@ export default async function handler(req, res) {
         }
 
         // Mettre à jour la commande avec le bon de commande et infos bancaires
+        console.log("💾 [API] Sauvegarde dans la DB avec langue:", langue)
         const updatedOrder = await Order.findByIdAndUpdate(
             id,
             {
@@ -59,6 +77,7 @@ export default async function handler(req, res) {
                 "infoBancaires.bic": bic.trim(),
                 "infoBancaires.montant": montantAPayer,
                 "infoBancaires.devise": devise,
+                "infoBancaires.langue": langue,
                 "infoBancaires.dateEnvoi": new Date(),
                 statut: "en_attente", // Passe en attente de paiement
             },
@@ -72,7 +91,8 @@ export default async function handler(req, res) {
             },
         })
 
-        await envoyerEmailClient(updatedOrder)
+        console.log("📧 [API] Envoi de l'email avec langue:", langue)
+        await envoyerEmailClient(updatedOrder, langue)
 
         // Marquer l'email comme envoyé
         await Order.findByIdAndUpdate(id, {
@@ -95,8 +115,19 @@ export default async function handler(req, res) {
     }
 }
 
-async function envoyerEmailClient(order) {
+async function envoyerEmailClient(order, langue) {
     try {
+        console.log("📨 [EMAIL] ========== GÉNÉRATION EMAIL ==========")
+        console.log("📨 [EMAIL] Langue reçue:", langue)
+        console.log("📨 [EMAIL] Langue depuis order:", order.infoBancaires?.langue)
+
+        // Fonction helper pour les traductions
+        const t = (path) => {
+            const translation = getTranslation("order", path, langue)
+            console.log(`📨 [EMAIL] Traduction [${path}] en [${langue}]:`, translation)
+            return translation
+        }
+
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: Number.parseInt(process.env.SMTP_PORT),
@@ -120,7 +151,7 @@ async function envoyerEmailClient(order) {
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Votre bon de commande</title>
+            <title>${t("title")}</title>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
                 
@@ -326,47 +357,47 @@ async function envoyerEmailClient(order) {
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Votre bon de commande</h1>
-                    <p>Bonjour ${order.prenom} ${order.nom},</p>
+                    <h1>${t("title")}</h1>
+                    <p>${t("greeting")} ${order.prenom} ${order.nom},</p>
                 </div>
-                
+
                 <div class="content">
-                    <p>Nous avons le plaisir de vous transmettre votre bon de commande pour :</p>
-                    
+                    <p>${t("intro")}</p>
+
                     <div class="details">
                         <h3>${annonce.titre}</h3>
-                        <p><strong>Marque :</strong> ${annonce.marque}</p>
-                        ${annonce.modele ? `<p><strong>Modèle :</strong> ${annonce.modele}</p>` : ""}
-                        <p><strong>Vendeur :</strong> ${vendeur.nom}</p>
-                        <p><strong>Voir l'annonce :</strong> <a href="${urlProduit}">Cliquez ici</a></p>
+                        <p><strong>${t("marque")}:</strong> ${annonce.marque}</p>
+                        ${annonce.modele ? `<p><strong>${t("modele")}:</strong> ${annonce.modele}</p>` : ""}
+                        <p><strong>${t("vendeur")}:</strong> ${vendeur.nom}</p>
+                        <p><strong>${t("voirAnnonce")}:</strong> <a href="${urlProduit}">${t("cliquerIci")}</a></p>
                     </div>
 
-                    <h3>Informations de paiement</h3>
+                    <h3>${t("infoPaiement")}</h3>
                     <div class="details">
-                        <p><strong>Montant à payer :</strong> ${order.infoBancaires.montant} ${order.infoBancaires.devise}</p>
-                        <p><strong>IBAN :</strong> ${order.infoBancaires.iban}</p>
-                        <p><strong>BIC :</strong> ${order.infoBancaires.bic}</p>
-                        <p><strong>Référence :</strong> ${order._id.toString().slice(-8)}</p>
+                        <p><strong>${t("montantAPayer")}:</strong> ${order.infoBancaires.montant} ${order.infoBancaires.devise}</p>
+                        <p><strong>IBAN:</strong> ${order.infoBancaires.iban}</p>
+                        <p><strong>BIC:</strong> ${order.infoBancaires.bic}</p>
+                        <p><strong>${t("reference")}:</strong> ${order._id.toString().slice(-8)}</p>
                     </div>
 
-                    <p>Pour finaliser votre commande, veuillez :</p>
+                    <p>${t("pourFinaliser")}</p>
                     <ol>
-                        <li>Télécharger le bon de commande</li>
-                        <li>Effectuer le paiement sur le compte indiqué</li>
-                        <li>Valider votre commande en cliquant sur le bouton ci-dessous</li>
+                        <li>${t("step1")}</li>
+                        <li>${t("step2")}</li>
+                        <li>${t("step3")}</li>
                     </ol>
 
                     <div class="button-container">
-                        <a href="${bonCommandeDownloadUrl}" class="button button-secondary">Télécharger le bon de commande</a>
-                        <a href="${urlValidation}" class="button button-primary">Valider ma commande</a>
+                        <a href="${bonCommandeDownloadUrl}" class="button button-secondary">${t("telechargerBon")}</a>
+                        <a href="${urlValidation}" class="button button-primary">${t("validerCommande")}</a>
                     </div>
 
-                    <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+                    <p>${t("questions")}</p>
                 </div>
 
                 <div class="footer">
                     <div class="signature">
-                        <p>Cordialement,<br>L'équipe Steyr Tracteurs GMBH</p>
+                        <p>${t("cordialement")},<br>${t("equipe")}</p>
                     </div>
                 </div>
             </div>
@@ -374,12 +405,17 @@ async function envoyerEmailClient(order) {
         </html>
         `
 
+        console.log("📨 [EMAIL] Sujet email:", getEmailSubject("order", langue, annonce.titre))
+
         const mailOptions = {
             from: process.env.SMTP_FROM,
             to: order.email,
-            subject: `Votre bon de commande - ${annonce.titre}`,
+            subject: getEmailSubject("order", langue, annonce.titre),
             html: htmlContent,
         }
+
+        console.log("📨 [EMAIL] Email préparé pour:", order.email)
+        console.log("📨 [EMAIL] Langue finale utilisée:", langue)
 
         await transporter.sendMail(mailOptions)
     } catch (error) {

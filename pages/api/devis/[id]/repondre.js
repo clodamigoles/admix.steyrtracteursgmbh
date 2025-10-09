@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongodb"
 import { Devis } from "@/models"
 import nodemailer from "nodemailer"
+const { getTranslation, getEmailSubject } = require("@/lib/email-translations")
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -13,7 +14,12 @@ export default async function handler(req, res) {
     await connectDB()
 
     const { id } = req.query
-    const { contrat, iban, bic, montantAPayer, devise = "EUR" } = req.body
+    const { contrat, iban, bic, montantAPayer, devise = "EUR", langue } = req.body
+
+    console.log("📧 [API DEVIS] ========== DÉBUT RÉPONDRE DEVIS ==========")
+    console.log("📧 [API DEVIS] Body complet:", req.body)
+    console.log("📧 [API DEVIS] Langue reçue:", langue)
+    console.log("📧 [API DEVIS] Type de langue:", typeof langue)
 
     try {
         // Validation des champs requis
@@ -23,6 +29,17 @@ export default async function handler(req, res) {
                 error: "Tous les champs sont requis (devis, IBAN, BIC, montant)",
             })
         }
+
+        // Validation de la langue
+        if (!langue) {
+            console.log("❌ [API DEVIS] Langue manquante!")
+            return res.status(400).json({
+                success: false,
+                error: "La langue est requise",
+            })
+        }
+
+        console.log("✅ [API DEVIS] Validation OK - langue:", langue)
 
         // Validation du montant
         if (montantAPayer <= 0) {
@@ -52,6 +69,7 @@ export default async function handler(req, res) {
         const contratDownloadUrl = contrat // contrat is already the full Cloudinary URL
 
         // Mettre à jour le devis avec la réponse admin
+        console.log("💾 [API DEVIS] Sauvegarde dans la DB avec langue:", langue)
         const updatedDevis = await Devis.findByIdAndUpdate(
             id,
             {
@@ -61,6 +79,7 @@ export default async function handler(req, res) {
                 "reponseAdmin.bic": bic.trim(),
                 "reponseAdmin.montantAPayer": montantAPayer,
                 "reponseAdmin.devise": devise,
+                "reponseAdmin.langue": langue,
                 "reponseAdmin.dateReponse": new Date(),
                 statut: "envoye",
             },
@@ -74,7 +93,8 @@ export default async function handler(req, res) {
             },
         })
 
-        await envoyerEmailClient(updatedDevis)
+        console.log("📧 [API DEVIS] Envoi de l'email avec langue:", langue)
+        await envoyerEmailClient(updatedDevis, langue)
 
         // Marquer l'email comme envoyé
         await Devis.findByIdAndUpdate(id, {
@@ -97,8 +117,19 @@ export default async function handler(req, res) {
     }
 }
 
-async function envoyerEmailClient(devis) {
+async function envoyerEmailClient(devis, langue) {
     try {
+        console.log("📨 [EMAIL DEVIS] ========== GÉNÉRATION EMAIL ==========")
+        console.log("📨 [EMAIL DEVIS] Langue reçue:", langue)
+        console.log("📨 [EMAIL DEVIS] Langue depuis devis:", devis.reponseAdmin?.langue)
+
+        // Fonction helper pour les traductions
+        const t = (path) => {
+            const translation = getTranslation("devis", path, langue)
+            console.log(`📨 [EMAIL DEVIS] Traduction [${path}] en [${langue}]:`, translation)
+            return translation
+        }
+
         // Configuration du transporteur email
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
@@ -123,7 +154,7 @@ async function envoyerEmailClient(devis) {
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Réponse à votre demande de devis</title>
+            <title>${t("title")}</title>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
                 
@@ -329,46 +360,46 @@ async function envoyerEmailClient(devis) {
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>Réponse à votre demande de devis</h1>
-                    <p>Bonjour ${devis.prenom} ${devis.nom},</p>
+                    <h1>${t("title")}</h1>
+                    <p>${t("greeting")} ${devis.prenom} ${devis.nom},</p>
                 </div>
-                
+
                 <div class="content">
-                    <p>Nous avons le plaisir de vous faire parvenir notre réponse concernant votre demande de devis pour :</p>
-                    
+                    <p>${t("intro")}</p>
+
                     <div class="details">
                         <h3>${annonce.titre}</h3>
-                        <p><strong>Marque :</strong> ${annonce.marque}</p>
-                        ${annonce.modele ? `<p><strong>Modèle :</strong> ${annonce.modele}</p>` : ""}
-                        <p><strong>Vendeur :</strong> ${vendeur.nom}</p>
-                        <p><strong>Voir l'annonce :</strong> <a href="${urlProduit}">Cliquez ici</a></p>
+                        <p><strong>${t("marque")}:</strong> ${annonce.marque}</p>
+                        ${annonce.modele ? `<p><strong>${t("modele")}:</strong> ${annonce.modele}</p>` : ""}
+                        <p><strong>${t("vendeur")}:</strong> ${vendeur.nom}</p>
+                        <p><strong>${t("voirAnnonce")}:</strong> <a href="${urlProduit}">${t("cliquerIci")}</a></p>
                     </div>
 
-                    <h3>Détails du devis</h3>
+                    <h3>${t("detailsDevis")}</h3>
                     <div class="details">
-                        <p><strong>Montant à payer :</strong> ${devis.reponseAdmin.montantAPayer} ${devis.reponseAdmin.devise}</p>
-                        <p><strong>IBAN :</strong> ${devis.reponseAdmin.iban}</p>
-                        <p><strong>BIC :</strong> ${devis.reponseAdmin.bic}</p>
+                        <p><strong>${t("montantAPayer")}:</strong> ${devis.reponseAdmin.montantAPayer} ${devis.reponseAdmin.devise}</p>
+                        <p><strong>IBAN:</strong> ${devis.reponseAdmin.iban}</p>
+                        <p><strong>BIC:</strong> ${devis.reponseAdmin.bic}</p>
                     </div>
 
-                    <p>Pour finaliser votre commande, veuillez :</p>
+                    <p>${t("pourFinaliser")}</p>
                     <ol>
-                        <li>Télécharger le devis</li>
-                        <li>Effectuer le paiement sur le compte indiqué</li>
-                        <li>Valider votre commande</li>
+                        <li>${t("step1")}</li>
+                        <li>${t("step2")}</li>
+                        <li>${t("step3")}</li>
                     </ol>
 
                     <div class="button-container">
-                        <a href="${contratDownloadUrl}" class="button button-secondary" style="color: ">Télécharger le dévis</a>
-                        <a href="${urlValidation}" class="button button-primary">Valider ma commande</a>
+                        <a href="${contratDownloadUrl}" class="button button-secondary">${t("telechargerDevis")}</a>
+                        <a href="${urlValidation}" class="button button-primary">${t("validerCommande")}</a>
                     </div>
 
-                    <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+                    <p>${t("questions")}</p>
                 </div>
 
                 <div class="footer">
                     <div class="signature">
-                        <p>Cordialement,<br>L'équipe Steyr Tracteurs GMBH</p>
+                        <p>${t("cordialement")},<br>${t("equipe")}</p>
                     </div>
                 </div>
             </div>
@@ -376,12 +407,17 @@ async function envoyerEmailClient(devis) {
         </html>
         `
 
+        console.log("📨 [EMAIL DEVIS] Sujet email:", getEmailSubject("devis", langue, annonce.titre))
+
         const mailOptions = {
             from: process.env.SMTP_FROM,
             to: devis.email,
-            subject: `Réponse à votre demande de devis - ${annonce.titre}`,
+            subject: getEmailSubject("devis", langue, annonce.titre),
             html: htmlContent,
         }
+
+        console.log("📨 [EMAIL DEVIS] Email préparé pour:", devis.email)
+        console.log("📨 [EMAIL DEVIS] Langue finale utilisée:", langue)
 
         await transporter.sendMail(mailOptions)
     } catch (error) {
